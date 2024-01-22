@@ -19,6 +19,7 @@
 #'   supply to this argument. This is safer than using a password because you
 #'   can easily delete a PAT without affecting any others. Defaults to the
 #'   GITLAB_PAT environment variable.
+
 #' @inheritParams install_github
 #' @export
 #' @family package installation
@@ -38,11 +39,13 @@ install_gitlab <- function(repo,
                            build_manual = FALSE, build_vignettes = FALSE,
                            repos = getOption("repos"),
                            type = getOption("pkgType"),
+                           ref = NULL,
                            ...) {
 
-  remotes <- lapply(repo, gitlab_remote, subdir = subdir, auth_token = auth_token, host = host)
+  remotes <- lapply(repo, gitlab_remote, subdir = subdir, ref = ref, auth_token = auth_token, host = host)
 
   install_remotes(remotes, auth_token = auth_token, host = host,
+                  ref = ref,
                   dependencies = dependencies,
                   upgrade = upgrade,
                   force = force,
@@ -57,11 +60,11 @@ install_gitlab <- function(repo,
 }
 
 gitlab_remote <- function(repo, subdir = NULL,
-                       auth_token = gitlab_pat(), sha = NULL,
+                       auth_token = gitlab_pat(), sha = NULL, ref = ref,
                        host = "gitlab.com", ...) {
 
   meta <- parse_git_repo(repo)
-  meta$ref <- meta$ref %||% "HEAD"
+  meta$ref <- ref %||% "HEAD"
 
   remote("gitlab",
     host = host,
@@ -150,7 +153,7 @@ format.gitlab_remote <- function(x, ...) {
   "GitLab"
 }
 
-gitlab_commit <- function(username, repo, ref = "HEAD",
+gitlab_commit <- function(username, repo, ref = ref,
   host = "gitlab.com", pat = gitlab_pat()) {
 
   url <- build_url(host, "api", "v4", "projects", utils::URLencode(paste0(username, "/", repo), reserved = TRUE), "repository", "commits", utils::URLencode(ref, reserved = TRUE))
@@ -179,7 +182,7 @@ gitlab_pat <- function(quiet = TRUE) {
   return(NULL)
 }
 
-gitlab_project_id <- function(username, repo, ref = "HEAD",
+gitlab_project_id <- function(username, repo, ref = ref,
   host = "gitlab.com", pat = gitlab_pat()) {
 
   url <- build_url(host, "api", "v4", "projects", utils::URLencode(paste0(username, "/", repo), reserved = TRUE), "repository", "commits", utils::URLencode(ref, reserved = TRUE))
